@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Business Finder — Live Shared Results</title>
+<title>Business Finder — Live</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:#0f172a; color:#e2e8f0; font-family:-apple-system,sans-serif; height:100vh; display:flex; flex-direction:column; }
@@ -17,7 +17,6 @@ body { background:#0f172a; color:#e2e8f0; font-family:-apple-system,sans-serif; 
 .copy-btn { padding:6px 16px; background:#dc2626; color:#fff; border:none; border-radius:5px; font-size:11px; font-weight:700; cursor:pointer; }
 .copy-btn:hover { background:#b91c1c; }
 #linkBox { flex:1; width:100%; padding:14px 16px; background:#0f172a; border:none; outline:none; resize:none; font-family:'Courier New',monospace; font-size:12px; color:#7dd3fc; line-height:1.9; }
-#linkBox::placeholder { color:#334155; }
 .status { text-align:center; padding:4px; font-size:9px; color:#475569; flex-shrink:0; }
 </style>
 </head>
@@ -30,52 +29,37 @@ body { background:#0f172a; color:#e2e8f0; font-family:-apple-system,sans-serif; 
     <span class="badge"><span class="dot"></span> LIVE</span>
   </div>
 </div>
-<textarea id="linkBox" readonly placeholder="Results load ho rahe hain — Extension chal rahi hogi tab results aenge..."></textarea>
+<textarea id="linkBox" readonly placeholder="Extension chal rahi hogi tab results aenge..."></textarea>
 <div class="status" id="status">Connecting...</div>
-
 <script>
 const FIREBASE_URL = "https://business-finder-a9d12-default-rtdb.firebaseio.com";
 let allResults = [];
 let lastCount  = 0;
-
-async function loadFromFirebase() {
+async function load() {
   try {
     const res  = await fetch(FIREBASE_URL + "/results.json");
     const data = await res.json();
-    
-    if (!data) {
-      document.getElementById('status').textContent = 'Connected — Extension start hone ka wait kar raha hai...';
-      return;
-    }
-
-    const urls = Object.values(data)
-      .map(item => item.url)
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
-
+    if (!data) { document.getElementById('status').textContent = 'Connected — Extension start karo...'; return; }
+    const urls = Object.values(data).map(i => i.url).filter(Boolean).sort();
     if (urls.length !== lastCount) {
-      lastCount  = urls.length;
+      lastCount = urls.length;
       allResults = urls;
       document.getElementById('totalCount').textContent = urls.length;
       document.getElementById('linkBox').value = urls.join('\n');
-      document.getElementById('status').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+      document.getElementById('status').textContent = 'Updated: ' + new Date().toLocaleTimeString();
     }
-  } catch(e) {
-    document.getElementById('status').textContent = 'Connection error — retry ho raha hai...';
-  }
+  } catch(e) { document.getElementById('status').textContent = 'Retry...'; }
 }
-
 document.getElementById('copyBtn').addEventListener('click', () => {
   if (!allResults.length) return;
   navigator.clipboard.writeText(allResults.join('\n')).then(() => {
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = '✓ Copied ' + allResults.length;
-    setTimeout(() => btn.textContent = 'Copy All', 2000);
+    const b = document.getElementById('copyBtn');
+    b.textContent = '✓ Copied ' + allResults.length;
+    setTimeout(() => b.textContent = 'Copy All', 2000);
   });
 });
-
-loadFromFirebase();
-setInterval(loadFromFirebase, 3000);
+load();
+setInterval(load, 3000);
 </script>
 </body>
 </html>
